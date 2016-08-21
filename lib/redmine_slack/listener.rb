@@ -62,7 +62,7 @@ class SlackListener < Redmine::Hook::Listener
 		speak msg, channel, attachment, url
 	end
 
-	def controller_issues_edit_before_save(context={})
+	def controller_issues_bulk_edit_before_save(context={})
 		issue = context[:issue]
 		journal = context[:journal]
 
@@ -72,12 +72,18 @@ class SlackListener < Redmine::Hook::Listener
 		return unless channel and url and Setting.plugin_redmine_slack[:post_updates] == '1'
 		return if issue.is_private?
 
-		msg = "[#{escape issue.project}] #{escape journal.user.to_s} updated <#{object_url issue}|#{escape issue}>#{mentions journal.notes}"
+		msg = "bulk edit before save [#{escape issue.project}] #{escape journal.user.to_s} updated <#{object_url issue}|#{escape issue}>#{mentions journal.notes}"
 
 		attachment = {}
 		attachment[:text] = escape journal.notes if journal.notes
 		attachment[:fields] = journal.details.map { |d| detail_to_field d }
 
+		attachment[:fields] << {
+			:title => I18n.t("field_watcher"),
+			:value => escape(issue.watcher_users.join(', ')),
+			:short => true
+		} if Setting.plugin_redmine_slack[:display_watchers] == 'yes'
+		
 		speak msg, channel, attachment, url
 	end
 
