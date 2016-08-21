@@ -73,13 +73,7 @@ class SlackListener < Redmine::Hook::Listener
 
 		msg = "bulk edit before save"
 
-		attachment = {}
-
-		attachment[:fields] << {
-			:title => I18n.t("field_watcher"),
-			:value => escape(issue.watcher_users.join(', ')),
-			:short => true
-		} if Setting.plugin_redmine_slack[:display_watchers] == 'yes'
+		attachment = nil
 
 		speak msg, channel, attachment, url
 	end
