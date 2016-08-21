@@ -71,9 +71,29 @@ class SlackListener < Redmine::Hook::Listener
 		return unless channel and url and Setting.plugin_redmine_slack[:post_updates] == '1'
 		return if issue.is_private?
 
-		msg = "bulk edit before save"
+		msg = "[#{escape issue.project}] <#{object_url issue}|#{escape issue}>"
 
-		attachment = nil
+		attachment = {}
+		attachment[:text] = escape issue.description if issue.description
+		attachment[:fields] = [{
+			:title => I18n.t("field_status"),
+			:value => escape(issue.status.to_s),
+			:short => true
+		}, {
+			:title => I18n.t("field_priority"),
+			:value => escape(issue.priority.to_s),
+			:short => true
+		}, {
+			:title => I18n.t("field_assigned_to"),
+			:value => escape(issue.assigned_to.to_s),
+			:short => true
+		}]
+
+		attachment[:fields] << {
+			:title => I18n.t("field_watcher"),
+			:value => escape(issue.watcher_users.join(', ')),
+			:short => true
+		} if Setting.plugin_redmine_slack[:display_watchers] == 'yes'
 
 		speak msg, channel, attachment, url
 	end
